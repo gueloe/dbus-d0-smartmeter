@@ -30,10 +30,10 @@ E.g. search for //lesekopf smartmeter// on ebay. I can suggest the version from 
 To provide the software on your Venus OS, execute there these commands:
 
 ````
-wget https://github.com/schollex/dbus-d0-smartmeter/archive/refs/heads/main.zip
+wget https://github.com/gueloe/dbus-d0-smartmeter/archive/refs/heads/main.zip
 unzip main.zip "dbus-d0-smartmeter-main/*" -d /data
 rm main.zip
-mv /data/dbus-d0-smartmeter-main /data/dbus-d0-smartmeter
+mv /data/dbus-d0-smartmeter-main/ /data/dbus-d0-smartmeter/
 ````
 ## Configuration
 

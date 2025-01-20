@@ -316,7 +316,16 @@ class DbusttysmartmeterService:
         except:
           wthird = values['100700']/3
           values['240700'], values['380700'], values['4c0700'] = wthird, wthird, wthird
+     
       thirddiff = (values['100700']-(values['240700']+values['380700']+values['4c0700']))/3
+      # Calculate Current Values, if not in OBIS Data
+      if not ('1f0700' in values and '330700' in values and '470700' in values and values['200700'] > 0 and values['340700'] > 0 and values['480700'] > 0):
+        try:
+          values['1f0700'] = values['240700']/values['200700']
+          values['330700'] = values['380700']/values['340700']
+          values['470700'] = values['4c0700']/values['480700']
+        except:
+          logging.debug('could not calculate Current Values' )
       ret = {
         '/Ac/Power': round(values['100700'], 1),
         '/Ac/Energy/Forward': '010800' in values and round(values['010800']/1000, 1) or None,

@@ -127,7 +127,7 @@ class DbusttysmartmeterService:
     devicepath = os.popen('readlink -f /dev/serial/by-id/%s' %devicename).read().replace('\n', '')
     ttyname = devicepath.replace('/dev/', '')
     os.system('/opt/victronenergy/serial-starter/stop-tty.sh %s' %ttyname)
-
+    self._crc_errors = 0
     self._initialized = not (len(sys.argv) >= 2)
     logging.info("current initialized-state = %r" %self._initialized)
 
@@ -172,9 +172,10 @@ class DbusttysmartmeterService:
         self._initialized = True
         logging.info("received smartmeter-data - start DBUS initialization...")
       else:
+        logging.warn("wait for smartmeter-data ...")
         time.sleep(readinterval/1000)
     
-    self._dbusservice = VeDbusService("{}.{}".format(servicename, devicename))
+    self._dbusservice = VeDbusService("{}.{}".format(servicename, devicename), register=False)
     self._paths = paths
     
     logging.debug("%s /DeviceInstance = %d" % (servicename, deviceinstance))
@@ -207,6 +208,7 @@ class DbusttysmartmeterService:
       self._dbusservice.add_path(
         path, settings['initial'], gettextcallback=settings['textformat'], writeable=True, onchangecallback=self._handlechangedvalue)
 
+    self._dbusservice.register()
     # last update
     #self._lastUpdate = time.time()
 
@@ -356,8 +358,9 @@ class DbusttysmartmeterService:
  
  
   def _signOfLife(self):
-    logging.info("Got %d measurements, last _update() call: %d" % (self._stats, self._lastUpdate))
+    logging.info("Got %d measurements and %d crc errors, last _update() call: %d EnergyForward=%s EnergyReverse=%s" % (self._stats,self._crc_errors, self._lastUpdate,self._dbusservice['/Ac/Energy/Forward'],self._dbusservice['/Ac/Energy/Reverse']))
     self._stats = 0
+    self._crc_errors = 0
     #logging.info("Last '/Ac/Power': %s" % (self._dbusservice['/Ac/Power']))
     return True
  
@@ -390,7 +393,8 @@ class DbusttysmartmeterService:
               self._lastUpdate = time.time()
               news = True
         else:
-          logging.info('checksum failed for rawdata=%s' %rawdata)
+          self._crc_errors = self._crc_errors + 1
+          logging.debug('checksum failed for rawdata=%s' %rawdata)
       #if self._lastUpdate+self._timeoutInterval/1000 < time.time():
       #  #raise ConnectionError('No correct data received')
       #  logging.debug('No correct data received')
